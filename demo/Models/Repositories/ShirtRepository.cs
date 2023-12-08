@@ -56,5 +56,25 @@ namespace demo.Models.Repositories
             );
         }
 
+        public static void UpdateShirt(Shirt shirt)
+        {
+            var shirtToUpdate = shirts.First(x => x.Id == shirt.Id);
+            shirtToUpdate.Id = shirt.Id;
+            shirtToUpdate.Brand = shirt.Brand;
+            shirtToUpdate.Price = shirt.Price;
+            shirtToUpdate.Color = shirt.Color;
+            shirtToUpdate.Size = shirt.Size;
+            shirtToUpdate.Gender = shirt.Gender;
+        }
+
+        public static void DeleteShirt(int id)
+        {
+            var existingShirt = GetShirtById(id);
+            if (existingShirt != null)
+            {
+                shirts.Remove(existingShirt);
+            }
+        }
+
     }
 }

@@ -1,4 +1,5 @@
 ﻿using demo.Filters;
+using demo.Filters.ExceptionFilters;
 using demo.Models;
 using demo.Models.Repositories;
 using demo.Models.Validations;
@@ -21,6 +22,7 @@ namespace demo.Controllers
         }
  
         [HttpGet("{id}")]
+        [Shirt_ValidateShirtIdFilter]
         public IActionResult GetShirtsById(int id)
         {
             if(id <= 0)
@@ -44,15 +46,24 @@ namespace demo.Controllers
 
 
         [HttpPatch("{id}")]
-        public string UpdateShirt(int id)
+        [Shirt_ValidateShirtIdFilter]
+        [Shirt_ValidateUpdateShirtFilter]
+        [Shirt_HandleUpdateExceptionsFilter]
+        public IActionResult UpdateShirt(int id, Shirt shirt)
         {
-            return $"Updating shirt with ID: {id}";
+                ShirtRepository.UpdateShirt(shirt);
+            return NoContent();
         }
 
 
         [HttpDelete("{id}")]
-        public string DeleteShirt(int id) {
-            return $"Deleting shirt with ID: {id}";
+        [Shirt_ValidateShirtIdFilter]
+        public IActionResult DeleteShirt(int id) {
+            var shirt = ShirtRepository.GetShirtById(id);
+            ShirtRepository.DeleteShirt(id);
+
+
+            return Ok(shirt);
         }
 
     }
