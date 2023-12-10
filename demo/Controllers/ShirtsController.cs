@@ -1,4 +1,5 @@
-﻿using demo.Filters;
+﻿using demo.Data;
+using demo.Filters;
 using demo.Filters.ExceptionFilters;
 using demo.Models;
 using demo.Models.Repositories;
@@ -12,33 +13,34 @@ namespace demo.Controllers
     [Route("api/[controller]")]
     public class ShirtsController : ControllerBase
     {
+        private readonly ApplicationDbContext _db;
 
-
+        public ShirtsController(ApplicationDbContext db)
+        {
+            _db = db;
+        }
 
         [HttpGet]
         public  IActionResult GetShirts()
         {
-            return Ok(ShirtRepository.getShirts());
+            return Ok(_db.Shirts.ToList());
         }
  
         [HttpGet("{id}")]
-        [Shirt_ValidateShirtIdFilter]
+        [TypeFilter(typeof(Shirt_ValidateShirtIdFilterAttribute))]
         public IActionResult GetShirtsById(int id)
         {
-            if(id <= 0)
-                return BadRequest();
-            var shirt = ShirtRepository.GetShirtById(id);
-            if (shirt == null)
-                return NotFound();
+            var shirt = HttpContext.Items["shirt"];
 
             return Ok(shirt);
         }
 
         [HttpPost]
-        [Shirt_ValdiateCreateShirtFilter]
+        [TypeFilter(typeof(Shirt_ValdiateCreateShirtFilterAttribute))]
         public IActionResult CreateShirt([FromBody] Shirt shirt)
         {
-            ShirtRepository.AddShirt(shirt);
+            _db.Shirts.Add(shirt);
+            _db.SaveChanges();
 
             return CreatedAtAction(nameof(GetShirtsById),
                 new { id = shirt.Id }, shirt);
@@ -46,9 +48,9 @@ namespace demo.Controllers
 
 
         [HttpPatch("{id}")]
-        [Shirt_ValidateShirtIdFilter]
+        [TypeFilter(typeof(Shirt_ValidateShirtIdFilterAttribute))]
         [Shirt_ValidateUpdateShirtFilter]
-        [Shirt_HandleUpdateExceptionsFilter]
+        [TypeFilter(typeof(Shirt_HandleUpdateExceptionsFilterAttribute))]
         public IActionResult UpdateShirt(int id, Shirt shirt)
         {
                 ShirtRepository.UpdateShirt(shirt);
@@ -57,7 +59,7 @@ namespace demo.Controllers
 
 
         [HttpDelete("{id}")]
-        [Shirt_ValidateShirtIdFilter]
+        [TypeFilter(typeof(Shirt_ValidateShirtIdFilterAttribute))]
         public IActionResult DeleteShirt(int id) {
             var shirt = ShirtRepository.GetShirtById(id);
             ShirtRepository.DeleteShirt(id);
