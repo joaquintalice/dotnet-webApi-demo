@@ -1,4 +1,5 @@
-﻿using demo.Models.Repositories;
+﻿using demo.Data;
+using demo.Models.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -6,6 +7,13 @@ namespace demo.Filters
 {
     public class Shirt_ValidateShirtIdFilterAttribute : ActionFilterAttribute
     {
+        private readonly ApplicationDbContext _db;
+
+        public Shirt_ValidateShirtIdFilterAttribute(ApplicationDbContext db)
+        {
+            _db = db;
+        }
+
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             base.OnActionExecuting(context);
@@ -22,14 +30,21 @@ namespace demo.Filters
                     };
                     context.Result = new BadRequestObjectResult(problemDetails);
                 }
-                else if (!ShirtRepository.ShirtExist(shirtId.Value))
+                else 
                 {
-                    context.ModelState.AddModelError("id", "Shirt doesn't exist.");
-                    var problemDetails = new ValidationProblemDetails(context.ModelState)
+                    var shirt = _db.Shirts.Find(shirtId.Value);
+                    if (shirt == null)
                     {
-                        Status = StatusCodes.Status404NotFound
-                    };
-                    context.Result = new NotFoundObjectResult(problemDetails);
+                        context.ModelState.AddModelError("id", "Shirt doesn't exist.");
+                        var problemDetails = new ValidationProblemDetails(context.ModelState)
+                        {
+                            Status = StatusCodes.Status404NotFound
+                        };
+                        context.Result = new NotFoundObjectResult(problemDetails);
+                    } else
+                    {
+                        context.HttpContext.Items["shirt"] = shirt;
+                    }
                 }
             
             }
